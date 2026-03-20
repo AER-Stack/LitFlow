@@ -11,6 +11,7 @@ import { DiscoverView } from './views/DiscoverView';
 import { ProfileView } from './views/ProfileView';
 import { BookDetailModal } from './components/BookDetailModal';
 import { motion, AnimatePresence } from 'motion/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 const AppContent: React.FC = () => {
   const { currentView } = useAppContext();
@@ -55,6 +56,7 @@ export default function App() {
   return (
     <AppProvider>
       <AppContent />
+      <SpeedInsights />
     </AppProvider>
   );
 }
