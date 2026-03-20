@@ -25,6 +25,7 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({ quote, recommendationLabel
   const [showEmbedModal, setShowEmbedModal] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
   const [isExporting, setIsExporting] = React.useState(false);
+  const [showHeartPop, setShowHeartPop] = React.useState(false);
   const cardRef = React.useRef<HTMLDivElement>(null);
   const book = books.find(b => b.id === quote.book_id);
   
@@ -32,6 +33,14 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({ quote, recommendationLabel
   const isSaved = savedQuotes.has(quote.id);
   const isFollowing = quote.user_id ? followedUsers.has(quote.user_id) : false;
   const quoteComments = comments.filter(c => c.quoteId === quote.id);
+
+  const handleDoubleTap = () => {
+    if (!isLiked) {
+      toggleLike(quote.id);
+    }
+    setShowHeartPop(true);
+    setTimeout(() => setShowHeartPop(false), 1000);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -152,7 +161,21 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({ quote, recommendationLabel
         <Sparkles size={120} className="text-cream" />
       </div>
 
-      <div className="relative z-10" onDoubleClick={() => toggleLike(quote.id)}>
+      <div className="relative z-10" onDoubleClick={handleDoubleTap}>
+        {/* Heart Pop Animation */}
+        <AnimatePresence>
+          {showHeartPop && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.5, y: 0 }}
+              animate={{ opacity: 1, scale: 1.5, y: -100 }}
+              exit={{ opacity: 0, scale: 0.5, y: -150 }}
+              className="absolute inset-0 flex items-center justify-center pointer-events-none z-50"
+            >
+              <Heart size={120} fill="#FF6321" className="text-terracotta drop-shadow-2xl" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
         {/* Recommendation Label */}
         {recommendationLabel && (
           <div className="mb-4 flex items-center space-x-2 text-[10px] font-bold uppercase tracking-widest text-terracotta/60">
@@ -266,16 +289,21 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({ quote, recommendationLabel
           <div className="flex items-center space-x-6">
             <button 
               onClick={() => toggleLike(quote.id)}
-              className={`flex items-center space-x-2 transition-colors ${isLiked ? 'text-terracotta' : 'text-cream/60 hover:text-cream'}`}
+              className={`flex items-center space-x-2 transition-all duration-300 ${isLiked ? 'text-terracotta scale-110' : 'text-cream/60 hover:text-cream'}`}
             >
               <motion.div
                 whileTap={{ scale: 1.5 }}
-                animate={{ scale: isLiked ? [1, 1.2, 1] : 1 }}
-                transition={{ duration: 0.3 }}
+                animate={{ 
+                  scale: isLiked ? [1, 1.4, 1] : 1,
+                  rotate: isLiked ? [0, 15, -15, 0] : 0
+                }}
+                transition={{ duration: 0.4 }}
               >
-                <Heart size={20} fill={isLiked ? 'currentColor' : 'none'} />
+                <Heart size={20} fill={isLiked ? 'currentColor' : 'none'} className={isLiked ? 'drop-shadow-[0_0_8px_rgba(255,99,33,0.4)]' : ''} />
               </motion.div>
-              <span className="text-xs font-medium">{quote.likes_count || 0}</span>
+              <span className={`text-xs font-bold transition-all ${isLiked ? 'text-terracotta' : 'text-cream/60'}`}>
+                {quote.likes_count || 0}
+              </span>
             </button>
             <button 
               onClick={() => setShowComments(!showComments)}
@@ -288,14 +316,17 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({ quote, recommendationLabel
           <div className="flex items-center space-x-4">
             <button 
               onClick={handleSaveClick}
-              className={`transition-colors ${isSaved ? 'text-sage' : 'text-cream/60 hover:text-cream'}`}
+              className={`transition-all duration-300 ${isSaved ? 'text-sage scale-110' : 'text-cream/60 hover:text-cream'}`}
             >
               <motion.div
                 whileTap={{ scale: 1.5 }}
-                animate={{ scale: isSaved ? [1, 1.2, 1] : 1 }}
-                transition={{ duration: 0.3 }}
+                animate={{ 
+                  scale: isSaved ? [1, 1.4, 1] : 1,
+                  y: isSaved ? [0, -4, 0] : 0
+                }}
+                transition={{ duration: 0.4 }}
               >
-                <Bookmark size={20} fill={isSaved ? 'currentColor' : 'none'} />
+                <Bookmark size={20} fill={isSaved ? 'currentColor' : 'none'} className={isSaved ? 'drop-shadow-[0_0_8px_rgba(110,121,105,0.4)]' : ''} />
               </motion.div>
             </button>
             <button 
