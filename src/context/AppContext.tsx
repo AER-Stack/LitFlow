@@ -150,19 +150,49 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const login = async (credentials: any) => {
-    const data = await api.login(credentials);
-    localStorage.setItem('litflow_token', data.token);
-    const mappedUser = mapUser(data.user);
-    localStorage.setItem('litflow_user', JSON.stringify(mappedUser));
-    setCurrentUser(mappedUser);
+    // Simulate backend delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // Mock successful response
+    const mockUser: User = {
+      id: 'mock-user-id',
+      username: credentials.email.split('@')[0] || 'devuser',
+      email: credentials.email,
+      avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${credentials.email}`,
+      bio: 'This is a temporary development account.',
+      preferredGenres: [],
+      followedAuthors: [],
+      following: [],
+      created_at: new Date().toISOString()
+    };
+    
+    const token = 'mock-jwt-token';
+    localStorage.setItem('litflow_token', token);
+    localStorage.setItem('litflow_user', JSON.stringify(mockUser));
+    setCurrentUser(mockUser);
   };
 
   const register = async (userData: any) => {
-    const data = await api.register(userData);
-    localStorage.setItem('litflow_token', data.token);
-    const mappedUser = mapUser(data.user);
-    localStorage.setItem('litflow_user', JSON.stringify(mappedUser));
-    setCurrentUser(mappedUser);
+    // Simulate backend delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // Mock successful response
+    const mockUser: User = {
+      id: 'mock-user-id',
+      username: userData.username || userData.email.split('@')[0],
+      email: userData.email,
+      avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.email}`,
+      bio: 'This is a temporary development account.',
+      preferredGenres: [],
+      followedAuthors: [],
+      following: [],
+      created_at: new Date().toISOString()
+    };
+    
+    const token = 'mock-jwt-token';
+    localStorage.setItem('litflow_token', token);
+    localStorage.setItem('litflow_user', JSON.stringify(mockUser));
+    setCurrentUser(mockUser);
   };
 
   const logout = () => {
@@ -218,7 +248,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const storedUser = localStorage.getItem('litflow_user');
         if (storedUser) {
           const user = JSON.parse(storedUser);
-          // Verify user still exists in backend (especially important for mock mode)
+          
+          // For development/mock mode, we skip backend verification
+          // If you want to re-enable backend verification, uncomment the lines below
+          /*
           const profile = await api.getUserProfile(user.id);
           if (profile && profile.user) {
             const mappedUser = mapUser(profile.user);
@@ -230,6 +263,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             localStorage.removeItem('litflow_user');
             setCurrentUser(null);
           }
+          */
+          
+          setCurrentUser(user);
         }
 
         // Fetch books and quotes

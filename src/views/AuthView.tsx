@@ -47,6 +47,11 @@ export const AuthView: React.FC = () => {
           <h2 className="text-3xl font-serif font-bold text-center mb-2">
             {isLogin ? 'Welcome Back' : 'Join LitFlow'}
           </h2>
+          <div className="flex justify-center mb-2">
+            <span className="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider rounded-full border border-amber-200">
+              Development Mode: Any credentials work
+            </span>
+          </div>
           <p className="text-stone-500 text-center mb-8">
             {isLogin ? 'Sign in to continue your literary journey' : 'Create an account to start sharing quotes'}
           </p>
