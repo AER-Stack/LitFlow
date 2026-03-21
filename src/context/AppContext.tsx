@@ -150,55 +150,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const login = async (credentials: any) => {
-    // Simulate backend delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Mock successful response
-    const mockUser: User = {
-      id: 'mock-user-id',
-      username: credentials.email.split('@')[0] || 'devuser',
-      email: credentials.email,
-      avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${credentials.email}`,
-      bio: 'This is a temporary development account.',
-      preferredGenres: [],
-      followedAuthors: [],
-      following: [],
-      created_at: new Date().toISOString()
-    };
-    
-    const token = 'mock-jwt-token';
-    localStorage.setItem('litflow_token', token);
-    localStorage.setItem('litflow_user', JSON.stringify(mockUser));
-    setCurrentUser(mockUser);
+    try {
+      const { user, token } = await api.login(credentials);
+      setCurrentUser(user);
+      // api.login already sets localStorage, but we can be explicit if we want
+      // though it's better to let the api handle it.
+    } catch (error) {
+      console.error('Login failed:', error);
+      throw error;
+    }
   };
 
   const register = async (userData: any) => {
-    // Simulate backend delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Mock successful response
-    const mockUser: User = {
-      id: 'mock-user-id',
-      username: userData.username || userData.email.split('@')[0],
-      email: userData.email,
-      avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.email}`,
-      bio: 'This is a temporary development account.',
-      preferredGenres: [],
-      followedAuthors: [],
-      following: [],
-      created_at: new Date().toISOString()
-    };
-    
-    const token = 'mock-jwt-token';
-    localStorage.setItem('litflow_token', token);
-    localStorage.setItem('litflow_user', JSON.stringify(mockUser));
-    setCurrentUser(mockUser);
+    try {
+      const { user, token } = await api.register(userData);
+      setCurrentUser(user);
+    } catch (error) {
+      console.error('Registration failed:', error);
+      throw error;
+    }
   };
 
   const logout = () => {
-    localStorage.removeItem('litflow_token');
-    localStorage.removeItem('litflow_user');
+    api.logout();
     setCurrentUser(null);
+    setCollections([]);
+    setReadingList([]);
+    setLikedQuotes(new Set());
+    setSavedQuotes(new Set());
   };
 
   const fetchQuotes = async (filter?: string, genre?: string, author?: string, search?: string, sortBy?: string) => {
@@ -248,24 +227,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const storedUser = localStorage.getItem('litflow_user');
         if (storedUser) {
           const user = JSON.parse(storedUser);
-          
-          // For development/mock mode, we skip backend verification
-          // If you want to re-enable backend verification, uncomment the lines below
-          /*
-          const profile = await api.getUserProfile(user.id);
-          if (profile && profile.user) {
-            const mappedUser = mapUser(profile.user);
-            setCurrentUser(mappedUser);
-            localStorage.setItem('litflow_user', JSON.stringify(mappedUser));
-          } else {
-            console.warn('User session invalid or user not found in backend. Logging out.');
-            localStorage.removeItem('litflow_token');
-            localStorage.removeItem('litflow_user');
-            setCurrentUser(null);
-          }
-          */
-          
           setCurrentUser(user);
+          
+          // Fetch user-specific data
+          const [collectionsData, readingListData, likesData, savedData] = await Promise.all([
+            api.getCollections(),
+            api.getReadingList(),
+            api.getUserLikes(user.id),
+            api.getSavedQuotes()
+          ]);
+          
+          setCollections(collectionsData);
+          setReadingList(readingListData);
+          setLikedQuotes(new Set(likesData));
+          setSavedQuotes(new Set(savedData));
         }
 
         // Fetch books and quotes
@@ -544,13 +519,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setCurrentView(view);
   };
 
-  const toggleSave = (id: string) => {
-    setSavedQuotes(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const toggleSave = async (id: string) => {
+    try {
+      const result = await api.saveQuote(id);
+      setSavedQuotes(prev => {
+        const next = new Set(prev);
+        if (result.saved) next.add(id);
+        else next.delete(id);
+        return next;
+      });
+    } catch (error) {
+      console.error('Failed to toggle save:', error);
+    }
   };
 
   const toggleFollow = async (id: string) => {
